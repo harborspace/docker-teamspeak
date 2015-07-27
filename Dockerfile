@@ -17,22 +17,32 @@ ENV    DEBIAN_FRONTEND noninteractive
 
 # Download and install everything from the repos.
 RUN    apt-get --yes update; apt-get --yes upgrade
-RUN    apt-get --yes install curl
+RUN    apt-get --yes install curl software-properties-common openssh-server supervisor
+RUN mkdir -p /var/run/sshd
+RUN mkdir -p /var/log/supervisor
+RUN    apt-get --yes install ssh
+
+ADD conf/ts.conf /etc/supervisor/conf.d/mc.conf
+ADD conf/sshd.conf /etc/supervisor/conf.d/sshd.conf
 
 # Download and install TeamSpeak 3
 RUN    curl "http://dl.4players.de/ts/releases/3.0.11.3/teamspeak3-server_linux-amd64-3.0.11.3.tar.gz" -o teamspeak3-server_linux-amd64-3.0.11.3.tar.gz
 RUN    tar zxf teamspeak3-server_linux-amd64-3.0.11.3.tar.gz; mv teamspeak3-server_linux-amd64 /opt/teamspeak; rm teamspeak3-server_linux-amd64-3.0.11.3.tar.gz
 
 # Load in all of our config files.
-ADD    ./scripts/start /start
+ADD    ./scripts/startts.sh /startts.sh
+ADD    ./scripts/init.sh    /init.sh
 
 # Fix all permissions
-RUN    chmod +x /start
+RUN    chmod +x /startts.sh init.sh
+
+
 
 # /start runs it.
 EXPOSE 9987/udp
 EXPOSE 10011
 EXPOSE 30033
+EXPOSE 22
 
 VOLUME ["/data"]
-CMD    ["/start"]
+CMD    ["/init.sh"]
